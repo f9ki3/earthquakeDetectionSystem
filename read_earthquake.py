@@ -1,8 +1,9 @@
 import serial
 import csv
 import time
+from datetime import datetime
+import math
 
-#pip install pyserial
 # Replace with your Arduino's port
 arduino_port = 'COM3'  # For Windows, or '/dev/ttyUSB0' for Linux
 baud_rate = 9600
@@ -24,9 +25,23 @@ with open(filename, mode='w', newline='') as file:
             # Read data from Arduino
             data = ser.readline().decode('utf-8').strip()
             if data:
+                # Split the data into x, y, z values
                 values = data.split(',')
-                writer.writerow(values)  # Write the values to CSV
-                print(f"Data saved: {values}")
+                if len(values) == 3:
+                    try:
+                        x, y, z = map(float, values)  # Convert to floats
+                        # Calculate magnitude
+                        magnitude = math.sqrt(x**2 + y**2 + z**2)
+                        
+                        # Check if magnitude is between 1 and 9
+                        if 1 <= magnitude <= 9:
+                            # Get the current timestamp
+                            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                            # Write to CSV
+                            writer.writerow([timestamp, round(magnitude, 2), x, y, z])
+                            print(f"Data saved: Timestamp={timestamp}, Magnitude={round(magnitude, 2)}, X={x}, Y={y}, Z={z}")
+                    except ValueError:
+                        print("Error: Invalid data received")
         except KeyboardInterrupt:
             print("Stopping...")
             break
